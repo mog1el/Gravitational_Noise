@@ -1,0 +1,23 @@
+## Gavitational noise
+
+A project that simulates the gravitational noise over the years, created by multiple neutron stars orbitting. I've used real-world equations to show how such noise is formed. The systems are created in a completely random state, meaning that there is almost no chance that two of them will be set up at the exact same angle, making it a truly randomized simulation that portrays the real world.
+
+---
+
+The simulation itself if probably far from optimised to work on any computer. My laptop does not support large values of total_time with small dt due to RAM constraints. This can be fixed by data segmenttion in the csv file (loading and saving it in chunks instead of storing the whole thing in RAM). This was not, however, the main focus of my work. If you would like to implement it, feel free to contribute to this repo.
+
+---
+
+In the simulation there is a constant dt that determines the amount of small fragments that time will be cut into. To get better (more acurate) results, you can lower the number. It, however, increases the number of calculations made by the computer, prolonging the time of completion. 
+
+#### WARNING!
+
+With a dt that is too large, the simulation will be completely screwed up, create a comically large value at the beginning and then suddenly moving to almost 0 (due to improper scaling). This makes the computation completely useless. The dt = 0.0005 works perfectly for me, but you can always change it however you want.
+
+The constants total_time and spawn_time, seen at the top of the gravity_noise.py resemble the total time of the simulation and the time before creation of the next binary system. Those can be changed
+
+For the code to work, some dependencies are necessary. To install them, run  `pip install numpy csv math random` . After doing this and downloading the python file, you are ready to go.
+
+---
+
+A sample plot of the simulation (with the data generated present in the repo's output.csv, available in the demo folder):
