@@ -4,14 +4,15 @@ import matplotlib.pyplot as plt
 df = pd.read_csv('output.csv', header=None)
 df.columns = ['hpz', 'hxz', 'hpx', 'hxx']
 
-time = [i for i in range(int(len(df)))]
+dt = 0.0005
+time = [i * dt for i in range(int(len(df)))]
 
 data1 = df['hpz']
 data2 = df['hxz']
 data3 = df['hpx']
 data4 = df['hxx']
 
-print(data1, data2, data3, data4)
+#print(data1, data2, data3, data4)
 
 fig = plt.figure()
 ax = fig.add_subplot(projection='3d')

@@ -2,11 +2,12 @@ import numpy as np
 import math
 import csv
 import random
+import pandas as pd
 
 ###
-total_time = 1e4
-spawn_time = 1e2
-dt = 0.0005
+total_time = 1e5
+spawn_time = 1e4
+dt = 0.0001
 ###
 
 Mpc = 5.38552341e20
@@ -20,9 +21,8 @@ T = 24 * 3600
 gsi = 6.6743e-11
 total_mass = 2 * 1.4 * Msun
 dist0 = ((T ** 2 * gsi * total_mass) / (2 * np.pi ** 2))**(1/3)
-time = [i for i in range(num)]
-print("Time created")
 filename = 'output.csv'
+chunks = int(spawn_time/dt)
 
 class Particle():
     def __init__(self, x, y, density, radius, color, omega):
@@ -95,15 +95,34 @@ def GW(omega, t, R, r, m):
     hxx = hxz/2
     return hplusz, hxz, hplusx, hxx
 
-data1 = [0] * num
-data2 = [0] * num
-data3 = [0] * num
-data4 = [0] * num
-
-def datacol(i, data1, data2, data3, data4):
+def datacol(my_particles, data1, data2, data3, data4):
     t = 0
     j = 0
 
+    running = True
+    while running and j < chunks:
+        if gravity(my_particles, G, dt):
+            running = False
+        
+        hpz, hxz, hpx, hxx = GW(star1.omega, t, (star1.x - masscentrx), r, star1.mass)
+        data1[j] += hpz
+        data2[j] += hxz
+        data3[j] += hpx
+        data4[j] += hxx
+
+        for p in my_particles:
+            p.x += p.x_vel * dt
+            p.y += p.y_vel * dt
+        
+        t += dt
+        j += 1
+    return data1, data2, data3, data4
+
+iter = math.floor(total_time/spawn_time)
+print("Setup done")
+
+total_particles = []
+for i in range(iter):
     theta = random.uniform(0, 2 * np.pi)
     star1 = Particle(-np.sin(theta) * (dist0/2), np.cos(theta) * (dist0/2), (1.4 * Msun * 3)/(4 * np.pi * 14000 ** 3), 14000, (255, 255, 255), 0)
     star2 = Particle(-star1.x, -star1.y, (1.4 * Msun * 3)/(4 * np.pi * 14000 ** 3), 14000, (255, 255, 255), 0)
@@ -114,36 +133,23 @@ def datacol(i, data1, data2, data3, data4):
     star2.x_vel = -star1.x_vel
     star2.y_vel = -star1.y_vel
     my_particles = [star1, star2]
+    total_particles.append(my_particles)
 
-    running = True
-    while running and i*int(spawn_time/dt) + j < total_time/dt:
-        if gravity(my_particles, G, dt):
-            running = False
-        
-        hpz, hxz, hpx, hxx = GW(star1.omega, t, (star1.x - masscentrx), r, star1.mass)
-        data1[i*int(spawn_time/dt) + j] += hpz
-        data2[i*int(spawn_time/dt) + j] += hxz
-        data3[i*int(spawn_time/dt) + j] += hpx
-        data4[i*int(spawn_time/dt) + j] += hxx
+with open(filename, "w", newline="", encoding="utf-8") as f:
+    writer = csv.writer(f)
+    for i in range(int(total_time/spawn_time)):
+        print(f"Starting chunk {i+1}")
+        z = 1
+        data1 = [0.0] * chunks
+        data2 = [0.0] * chunks
+        data3 = [0.0] * chunks
+        data4 = [0.0] * chunks
+        for j in range(0, z):
+            print(f"Starting merger {j+1}")
+            data1, data2, data3, data4 = datacol(total_particles[j], data1, data2, data3, data4)
+            df = zip(data1, data2, data3, data4)
+            print("Outputting data")
+            writer.writerows(df)
+        z += 1
 
-        for p in my_particles:
-            p.x += p.x_vel * dt
-            p.y += p.y_vel * dt
-        
-        t += dt
-        j += 1
-
-iter = math.floor(total_time/spawn_time)
-print("Setup done")
-for i in range(iter):
-    print(f"Starting merger {i+1}")
-    datacol(i, data1, data2, data3, data4)
-    print(f"Merger {i + 1}/{iter} done")
-
-print("Outputting data")
-rows = zip(data1, data2, data3, data4)
-with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
-    csv_writer = csv.writer(csvfile)
-    csv_writer.writerows(rows)
-print(f"Data in {filename}")
-print(dist0)
+print("All done")
