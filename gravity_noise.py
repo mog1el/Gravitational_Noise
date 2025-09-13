@@ -5,8 +5,8 @@ import random
 import pandas as pd
 
 ###
-total_time = 1e5
-spawn_time = 1e4
+total_time = 1e3
+spawn_time = 1e2
 dt = 0.0001
 ###
 
@@ -137,9 +137,9 @@ for i in range(iter):
 
 with open(filename, "w", newline="", encoding="utf-8") as f:
     writer = csv.writer(f)
+    z = 1
     for i in range(int(total_time/spawn_time)):
         print(f"Starting chunk {i+1}")
-        z = 1
         data1 = [0.0] * chunks
         data2 = [0.0] * chunks
         data3 = [0.0] * chunks
@@ -147,9 +147,9 @@ with open(filename, "w", newline="", encoding="utf-8") as f:
         for j in range(0, z):
             print(f"Starting merger {j+1}")
             data1, data2, data3, data4 = datacol(total_particles[j], data1, data2, data3, data4)
-            df = zip(data1, data2, data3, data4)
-            print("Outputting data")
-            writer.writerows(df)
+        df = zip(data1, data2, data3, data4)
+        print("Outputting data")
+        writer.writerows(df)
         z += 1
 
 print("All done")

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 df = pd.read_csv('output.csv', header=None)
 df.columns = ['hpz', 'hxz', 'hpx', 'hxx']
 
-dt = 0.0005
+dt = 0.0001
 time = [i * dt for i in range(int(len(df)))]
 
 data1 = df['hpz']
