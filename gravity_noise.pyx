@@ -2,13 +2,7 @@ import numpy as np
 import math
 import csv
 import random
-import pandas as pd
-
-###
-total_time = 1e3
-spawn_time = 1e2
-dt = 0.0001
-###
+import argparse
 
 Mpc = 5.38552341e20
 seconds_year = 365.25 * 24 * 3600
@@ -16,13 +10,10 @@ G = 6.6743e-11 * seconds_year ** 2
 c = 3e8 * seconds_year
 r = 100 * Mpc
 Msun = 1.989e30
-num = int(total_time / dt)
 T = 24 * 3600 
 gsi = 6.6743e-11
 total_mass = 2 * 1.4 * Msun
 dist0 = ((T ** 2 * gsi * total_mass) / (2 * np.pi ** 2))**(1/3)
-filename = 'output.csv'
-chunks = int(spawn_time/dt)
 
 class Particle():
     def __init__(self, x, y, density, radius, color, omega):
@@ -95,11 +86,12 @@ def GW(omega, t, R, r, m):
     hxx = hxz/2
     return hplusz, hxz, hplusx, hxx
 
-def datacol(my_particles, data1, data2, data3, data4):
+def datacol(my_particles, data1, data2, data3, data4, dt, chunks):
     t = 0
     j = 0
 
     running = True
+    star1 = my_particles[0]
     while running and j < chunks:
         if gravity(my_particles, G, dt):
             running = False
@@ -118,38 +110,43 @@ def datacol(my_particles, data1, data2, data3, data4):
         j += 1
     return data1, data2, data3, data4
 
-iter = math.floor(total_time/spawn_time)
-print("Setup done")
+def letsgo(total_time=1e3, spawn_time=1e2, dt=1e-4, spawnchunks=2, filename="output.csv"):
+    chunks = int((spawn_time/dt)/spawnchunks)
+    total_chunks = int(total_time / (spawn_time / spawnchunks))
+    iter = math.floor(spawnchunks * total_time/spawn_time)
+    print("Setup done")
 
-total_particles = []
-for i in range(iter):
-    theta = random.uniform(0, 2 * np.pi)
-    star1 = Particle(-np.sin(theta) * (dist0/2), np.cos(theta) * (dist0/2), (1.4 * Msun * 3)/(4 * np.pi * 14000 ** 3), 14000, (255, 255, 255), 0)
-    star2 = Particle(-star1.x, -star1.y, (1.4 * Msun * 3)/(4 * np.pi * 14000 ** 3), 14000, (255, 255, 255), 0)
-    theta = random.uniform(0, 2 * np.pi)
-    v0 = np.sqrt((G * star1.mass) / (4 * (dist0)/2))
-    star1.x_vel = -v0 * np.cos(theta)
-    star1.y_vel = v0 * np.sin(theta)
-    star2.x_vel = -star1.x_vel
-    star2.y_vel = -star1.y_vel
-    my_particles = [star1, star2]
-    total_particles.append(my_particles)
+    total_particles = []
+    for i in range(iter):
+        theta = random.uniform(0, 2 * np.pi)
+        star1 = Particle(-np.sin(theta) * (dist0/2), np.cos(theta) * (dist0/2), (1.4 * Msun * 3)/(4 * np.pi * 14000 ** 3), 14000, (255, 255, 255), 0)
+        star2 = Particle(-star1.x, -star1.y, (1.4 * Msun * 3)/(4 * np.pi * 14000 ** 3), 14000, (255, 255, 255), 0)
+        theta = random.uniform(0, 2 * np.pi)
+        v0 = np.sqrt((G * star1.mass) / (4 * (dist0)/2))
+        star1.x_vel = -v0 * np.cos(theta)
+        star1.y_vel = v0 * np.sin(theta)
+        star2.x_vel = -star1.x_vel
+        star2.y_vel = -star1.y_vel
+        my_particles = [star1, star2]
+        total_particles.append(my_particles)
 
-with open(filename, "w", newline="", encoding="utf-8") as f:
-    writer = csv.writer(f)
-    z = 1
-    for i in range(int(total_time/spawn_time)):
-        print(f"Starting chunk {i+1}")
-        data1 = [0.0] * chunks
-        data2 = [0.0] * chunks
-        data3 = [0.0] * chunks
-        data4 = [0.0] * chunks
-        for j in range(0, z):
-            print(f"Starting merger {j+1}")
-            data1, data2, data3, data4 = datacol(total_particles[j], data1, data2, data3, data4)
-        df = zip(data1, data2, data3, data4)
-        print("Outputting data")
-        writer.writerows(df)
-        z += 1
+    with open(filename, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        
+        z = 1
+        for i in range(int(spawnchunks * total_time/spawn_time)):
+            print(f"Starting chunk {i+1}/{total_chunks}")
+            data1 = [0.0] * chunks
+            data2 = [0.0] * chunks
+            data3 = [0.0] * chunks
+            data4 = [0.0] * chunks
+            for j in range(0, z):
+                print(f"Starting merger {j+1}")
+                data1, data2, data3, data4 = datacol(total_particles[j], data1, data2, data3, data4, dt, chunks)
+            df = zip(data1, data2, data3, data4)
+            print("Outputting data")
+            writer.writerows(df)
+            if i % spawnchunks == spawnchunks - 1:
+                z += 1
 
-print("All done")
+    print("All done")
