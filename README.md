@@ -4,7 +4,11 @@ A project that simulates the gravitational noise over the years, created by mult
 
 ---
 
-The simulation itself if probably far from optimised to work on any computer. My laptop does not support large values of total_time with small dt due to RAM constraints. This can be fixed by data segmenttion in the csv file (loading and saving it in chunks instead of storing the whole thing in RAM). This was not, however, the main focus of my work. If you would like to implement it, feel free to contribute to this repo.
+In order to run the simulation, after changing something in the `gravity_noise.pyx` file, you have to first compile it using Cython, by running `python setup.py build_ext --inplace`. After that is complete, you can run the command `python -c "import gravity_noise; gravity_noise.letsgo(total_time=1e4, spawn_time=1e3, dt=1e-4, spawnchunks=2, filename='output.csv')"` (of course you can and should change the values accordingly to your needs. If not done, default values will be used.).
+
+---
+
+The simulation uses chunks in order to make it accessible for every computer. This can be adjusted by the `spawnchunks` variable that tells the code the amount of segments that should create one spawn_time (before new star arises). It can be, when utilizing large numbers, useful to offload the RAM.
 
 ---
 
@@ -12,7 +16,7 @@ In the simulation there is a constant dt that determines the amount of small fra
 
 #### WARNING!
 
-With a dt that is too large, the simulation will be completely screwed up, create a comically large value at the beginning and then suddenly moving to almost 0 (due to improper scaling). This makes the computation completely useless. The dt = 0.0005 works perfectly for me, but you can always change it however you want.
+With a dt that is too large, the simulation will be completely screwed up, create a comically large value at the beginning and then suddenly moving to almost 0 (due to improper scaling). This makes the computation completely useless. The dt = 0.0005 works perfectly for me, but you can always change it however you want. Please, however, after adjusting dt, adjust it in `noise_csv.py` file.
 
 The constants total_time and spawn_time, seen at the top of the gravity_noise.py resemble the total time of the simulation and the time before creation of the next binary system. Those can be changed
 
